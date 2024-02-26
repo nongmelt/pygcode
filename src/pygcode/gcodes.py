@@ -73,27 +73,25 @@ from .exceptions import GCodeParameterError, GCodeWordStrError
 
 MODAL_GROUP_MAP = {
     # "G" codes
-    'motion': 1,
-    'plane_selection': 2,
-    'distance': 3,
-    'arc_ijk_distance': 4,
-    'feed_rate_mode': 5,
-    'units': 6,
-    'cutter_diameter_comp': 7,
-    'tool_length_offset': 8,
-    'canned_cycles_return': 10,
-    'coordinate_system': 12,
-    'control_mode': 13,
-    'spindle_speed_mode': 14,
-    'lathe_diameter': 15,
-
+    "motion": 1,
+    "plane_selection": 2,
+    "distance": 3,
+    "arc_ijk_distance": 4,
+    "feed_rate_mode": 5,
+    "units": 6,
+    "cutter_diameter_comp": 7,
+    "tool_length_offset": 8,
+    "canned_cycles_return": 10,
+    "coordinate_system": 12,
+    "control_mode": 13,
+    "spindle_speed_mode": 14,
+    "lathe_diameter": 15,
     # "M" codes
-    'stopping': 104,
-    'spindle': 107,
-    'coolant': 108,
-    'override_switches': 109,
-    'user_defined': 110,
-
+    "stopping": 104,
+    "spindle": 107,
+    "coolant": 108,
+    "override_switches": 109,
+    "user_defined": 110,
     # Traditionally Non-grouped:
     #   Although these GCodes set the machine's mode, there are no other GCodes to
     #   group with them. So although they're modal, they don't have a defined
@@ -102,9 +100,9 @@ MODAL_GROUP_MAP = {
     #       - validating gcode blocks for conflicting commands
     #       - remembering machine's state with consistency across gcodes
     #   Therefore, I've added F, S, and T GCodes to custom group numbers (> 200)
-    'feed_rate': 201,
-    'spindle_speed': 202,
-    'tool': 203,
+    "feed_rate": 201,
+    "spindle_speed": 202,
+    "tool": 203,
 }
 
 # Execution Order
@@ -139,10 +137,10 @@ MODAL_GROUP_MAP = {
 
 class GCode(object):
     # Defining Word
-    word_key = None # Word instance to use in lookup
-    word_matches = None # function (secondary)
+    word_key = None  # Word instance to use in lookup
+    word_matches = None  # function (secondary)
     default_word = None
-    word_letter = 'G'
+    word_letter = "G"
     word_value_configurable = False  # if set, word value can be the first parameter
 
     # Parameters associated to this gcode
@@ -150,7 +148,7 @@ class GCode(object):
 
     # Modal stuff
     modal_group = None
-    modal_param_letters = set() # by default: no parameters are retained in modal state
+    modal_param_letters = set()  # by default: no parameters are retained in modal state
 
     # Execution Order
     exec_order = 999  # if not otherwise specified, run last
@@ -164,7 +162,9 @@ class GCode(object):
         param_words = words[1:]
         if gcode_word_list:
             gcode_word = gcode_word_list[0]
-            if self.word_value_configurable and isinstance(gcode_word, six.integer_types + (float,)):
+            if self.word_value_configurable and isinstance(
+                gcode_word, six.integer_types + (float,)
+            ):
                 gcode_word = Word(self.word_letter, gcode_word)  # cast to Word()
         else:
             gcode_word = self._default_word()
@@ -179,16 +179,17 @@ class GCode(object):
         # Add Given Parameters
         for param_word in param_words:
             self.add_parameter(param_word)
-        for (k, v) in params.items():
+        for k, v in params.items():
             self.add_parameter(Word(k, v))
 
     def __repr__(self):
-        param_str = ''
+        param_str = ""
         if self.params:
-            param_str = "{%s}" % (', '.join([
-                "{}".format(self.params[k])
-                for k in sorted(self.params.keys())
-            ]))
+            param_str = "{%s}" % (
+                ", ".join(
+                    ["{}".format(self.params[k]) for k in sorted(self.params.keys())]
+                )
+            )
         return "<{class_name}: {gcode}{params}>".format(
             class_name=self.__class__.__name__,
             gcode=self.word,
@@ -197,15 +198,14 @@ class GCode(object):
 
     def __str__(self):
         """String representation of gcode, as it would be seen in a .gcode file"""
-        param_str = ''
+        param_str = ""
         if self.params:
-            param_str += ' ' + ' '.join([
-                "{}".format(self.params[k])
-                for k in sorted(self.params.keys())
-            ])
+            param_str += " " + " ".join(
+                ["{}".format(self.params[k]) for k in sorted(self.params.keys())]
+            )
         word_str = str(self.word)
         if self._whitespace_prefix:
-            word_str = ' ' * len(word_str)
+            word_str = " " * len(word_str)
         return "{word_str}{parameters}".format(
             word_str=word_str,
             parameters=param_str,
@@ -220,10 +220,7 @@ class GCode(object):
 
     # Equality
     def __eq__(self, other):
-        return (
-            (self.word == other.word) and
-            (self.params == other.params)
-        )
+        return (self.word == other.word) and (self.params == other.params)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -249,9 +246,13 @@ class GCode(object):
         """
         assert isinstance(word, Word), "invalid parameter class: %r" % word
         if word.letter not in self.param_letters:
-            raise GCodeParameterError("invalid parameter for %s: %s" % (self.__class__.__name__, str(word)))
+            raise GCodeParameterError(
+                "invalid parameter for %s: %s" % (self.__class__.__name__, str(word))
+            )
         if word.letter in self.params:
-            raise GCodeParameterError("parameter defined twice: %s -> %s" % (self.params[word.letter], word))
+            raise GCodeParameterError(
+                "parameter defined twice: %s -> %s" % (self.params[word.letter], word)
+            )
 
         self.params[word.letter] = word
 
@@ -272,12 +273,13 @@ class GCode(object):
             if key in self.params:
                 return self.params[key].value
             else:
-                return None # parameter is valid for GCode, but undefined
+                return None  # parameter is valid for GCode, but undefined
 
-        raise AttributeError("'{cls}' object has no attribute '{key}'".format(
-            cls=self.__class__.__name__,
-            key=key
-        ))
+        raise AttributeError(
+            "'{cls}' object has no attribute '{key}'".format(
+                cls=self.__class__.__name__, key=key
+            )
+        )
 
     def __setattr__(self, key, value):
         if key in self.param_letters:
@@ -295,10 +297,10 @@ class GCode(object):
 
     def modal_copy(self):
         """Copy of GCode instance containing only parameters listed in modal_param_letters"""
-        return self.__class__(self.word, *[
-            w for (l, w) in self.params.items()
-            if l in self.modal_param_letters
-        ])
+        return self.__class__(
+            self.word,
+            *[w for (l, w) in self.params.items() if l in self.modal_param_letters]
+        )
 
     def get_param_dict(self, letters=None, lc=False):
         """
@@ -312,7 +314,8 @@ class GCode(object):
         if lc:
             letter_mod = lambda x: x.lower()
         return dict(
-            (letter_mod(w.letter), w.value) for w in self.params.values()
+            (letter_mod(w.letter), w.value)
+            for w in self.params.values()
             if (letters is None) or (w.letter in letters)
         )
 
@@ -323,7 +326,10 @@ class GCode(object):
         :param machine: Machine instance, to change state
         :return: GCodeEffect instance; effect the gcode just had on machine
         """
-        from .machine import Machine  # importing up (done live to avoid dependency loop)
+        from .machine import (
+            Machine,
+        )  # importing up (done live to avoid dependency loop)
+
         assert isinstance(machine, Machine), "invalid machine type: %r" % machine
 
         # Set mode
@@ -346,19 +352,21 @@ class GCode(object):
 # N#                            Define line number (oldschool)
 # O<name>                       Define program name
 
+
 class GCodeDefinition(GCode):
     pass
 
 
 class GCodeLineNumber(GCodeDefinition):
     """N: Line Number"""
-    word_letter = 'N'
+
+    word_letter = "N"
     word_value_configurable = True
     exec_order = 0
 
     @classmethod
     def word_matches(cls, w):
-        return w.letter == 'N'
+        return w.letter == "N"
 
     @property
     def number(self):
@@ -367,13 +375,14 @@ class GCodeLineNumber(GCodeDefinition):
 
 class GCodeProgramName(GCodeDefinition):
     """O: Program Name"""
-    word_letter = 'O'
+
+    word_letter = "O"
     word_value_configurable = True
     exec_order = 1
 
     @classmethod
     def word_matches(cls, w):
-        return w.letter == 'O'
+        return w.letter == "O"
 
     @property
     def name(self):
@@ -395,9 +404,10 @@ class GCodeProgramName(GCodeDefinition):
 # G33.1         K               Rigid Tapping
 # G80                           Cancel Canned Cycle
 
+
 class GCodeMotion(GCode):
-    param_letters = set('XYZABCUVW')
-    modal_group = MODAL_GROUP_MAP['motion']
+    param_letters = set("XYZEFABCUVW")
+    modal_group = MODAL_GROUP_MAP["motion"]
     exec_order = 242
 
     def _process(self, machine):
@@ -406,7 +416,8 @@ class GCodeMotion(GCode):
 
 class GCodeRapidMove(GCodeMotion):
     """G0: Rapid Move"""
-    word_key = Word('G', 0)
+
+    word_key = Word("G", 0)
 
     def _process(self, machine):
         machine.move_to(rapid=True, **self.get_param_dict(letters=machine.axes))
@@ -414,51 +425,64 @@ class GCodeRapidMove(GCodeMotion):
 
 class GCodeLinearMove(GCodeMotion):
     """G1: Linear Move"""
-    word_key = Word('G', 1)
+
+    word_key = Word("G", 1)
 
 
 class GCodeArcMove(GCodeMotion):
     """Arc Move"""
-    param_letters = GCodeMotion.param_letters | set('IJKRP')
+
+    param_letters = GCodeMotion.param_letters | set("IJKRP")
 
     def assert_params(self):
         param_letters = set(self.params.keys())
         # Parameter groups
-        params_xyz = set('XYZ') & set(param_letters)
-        params_ijk = set('IJK') & set(param_letters)
-        params_r = set('R') & set(param_letters)
+        params_xyz = set("XYZ") & set(param_letters)
+        params_ijk = set("IJK") & set(param_letters)
+        params_r = set("R") & set(param_letters)
         params_ijkr = params_ijk | params_r
 
         # --- Parameter Groups
         # XYZ: at least 1
         if not params_xyz:
-            raise GCodeParameterError("no XYZ parameters set for destination: %r" % arc_gcode)
+            raise GCodeParameterError(
+                "no XYZ parameters set for destination: %r" % arc_gcode
+            )
         # IJK or R: only in 1 group
         if params_ijk and params_r:
-            raise GCodeParameterError("both IJK and R parameters defined: %r" % arc_gcode)
+            raise GCodeParameterError(
+                "both IJK and R parameters defined: %r" % arc_gcode
+            )
         # IJKR: at least 1
         if not params_ijkr:
-            raise GCodeParameterError("neither IJK or R parameters defined: %r" % arc_gcode)
+            raise GCodeParameterError(
+                "neither IJK or R parameters defined: %r" % arc_gcode
+            )
 
         # --- Parameter Values
         if params_r and (self.R == 0):
-            raise GCodeParameterError("cannot plot a circle with a radius of zero: %r" % arc_gcode)
+            raise GCodeParameterError(
+                "cannot plot a circle with a radius of zero: %r" % arc_gcode
+            )
 
 
 class GCodeArcMoveCW(GCodeArcMove):
     """G2: Arc Move (clockwise)"""
-    word_key = Word('G', 2)
+
+    word_key = Word("G", 2)
 
 
 class GCodeArcMoveCCW(GCodeArcMove):
     """G3: Arc Move (counter-clockwise)"""
-    word_key = Word('G', 3)
+
+    word_key = Word("G", 3)
 
 
 class GCodeDwell(GCodeMotion):
     """G4: Dwell"""
-    param_letters = set('P')  # doesn't accept axis parameters
-    word_key = Word('G', 4)
+
+    param_letters = set("P")  # doesn't accept axis parameters
+    word_key = Word("G", 4)
     modal_group = None  # one of the few motion commands that isn't modal
     exec_order = 140
 
@@ -468,50 +492,59 @@ class GCodeDwell(GCodeMotion):
 
 class GCodeCublcSpline(GCodeMotion):
     """G5: Cubic Spline"""
-    param_letters = GCodeMotion.param_letters | set('IJPQ')
-    word_key = Word('G', 5)
+
+    param_letters = GCodeMotion.param_letters | set("IJPQ")
+    word_key = Word("G", 5)
 
 
 class GCodeQuadraticSpline(GCodeMotion):
     """G5.1: Quadratic Spline"""
-    param_letters = GCodeMotion.param_letters | set('IJ')
-    word_key = Word('G', 5.1)
+
+    param_letters = GCodeMotion.param_letters | set("IJ")
+    word_key = Word("G", 5.1)
 
 
 class GCodeNURBS(GCodeMotion):
     """G5.2: Non-uniform rational basis spline (NURBS)"""
-    param_letters = GCodeMotion.param_letters | set('PL')
-    word_key = Word('G', 5.2)
+
+    param_letters = GCodeMotion.param_letters | set("PL")
+    word_key = Word("G", 5.2)
 
 
 class GCodeNURBSEnd(GCodeNURBS):
     """G5.3: end NURBS mode"""
-    word_key = Word('G', 5.3)
+
+    word_key = Word("G", 5.3)
 
 
 class GCodeStraightProbe(GCodeMotion):
     """G38.2-G38.5: Straight Probe"""
+
     @classmethod
     def word_matches(cls, w):
-        return (w.letter == 'G') and (38.2 <= w.value <= 38.5)
-    default_word = Word('G', 38.2)
+        return (w.letter == "G") and (38.2 <= w.value <= 38.5)
+
+    default_word = Word("G", 38.2)
 
 
 class GCodeSpindleSyncMotion(GCodeMotion):
     """G33: Spindle Synchronized Motion"""
-    param_letters = GCodeMotion.param_letters | set('K')
-    word_key = Word('G', 33)
+
+    param_letters = GCodeMotion.param_letters | set("K")
+    word_key = Word("G", 33)
 
 
 class GCodeRigidTapping(GCodeMotion):
     """G33.1: Rigid Tapping"""
-    param_letters = GCodeMotion.param_letters | set('K')
-    word_key = Word('G', 33.1)
+
+    param_letters = GCodeMotion.param_letters | set("K")
+    word_key = Word("G", 33.1)
 
 
 class GCodeCancelCannedCycle(GCodeMotion):
     """G80: Cancel Canned Cycle"""
-    word_key = Word('G', 80)
+
+    word_key = Word("G", 80)
     # Modal Group
     #   Technically G80 belongs to the motion modal group, however it's often
     #   expressed in the same line as another motion command.
@@ -537,18 +570,21 @@ class GCodeCancelCannedCycle(GCodeMotion):
 # G89               R L (P)             Boring Cycle, Dwell, Feed Out
 # G76               P Z I J R K Q H L E Threading Cycle
 
+
 class GCodeCannedCycle(GCode):
-    param_letters = set('XYZUVW')
-    modal_group = MODAL_GROUP_MAP['motion']
+    param_letters = set("XYZUVW")
+    modal_group = MODAL_GROUP_MAP["motion"]
     exec_order = 242
 
     def _process(self, machine):
         moveto_coords = self.get_param_dict(letters=machine.axes)
         if isinstance(machine.mode.canned_cycles_return, GCodeCannedCycleReturnToR):
             # canned return is to this.R, not this.Z (plane dependent)
-            moveto_coords.update({
-                machine.mode.plane_selection.normal_axis: self.R,
-            })
+            moveto_coords.update(
+                {
+                    machine.mode.plane_selection.normal_axis: self.R,
+                }
+            )
         else:  # default: GCodeCannedCycleReturnPrevLevel
             # Remove this.Z (plane dependent) value (ie: no machine movement on this axis)
             moveto_coords.pop(machine.mode.plane_selection.normal_axis, None)
@@ -563,50 +599,57 @@ class GCodeCannedCycle(GCode):
 
 class GCodeDrillingCycle(GCodeCannedCycle):
     """G81: Drilling Cycle"""
-    param_letters = GCodeCannedCycle.param_letters | set('RLP')
-    word_key = Word('G', 81)
-    modal_param_letters = GCodeCannedCycle.param_letters | set('RP')
+
+    param_letters = GCodeCannedCycle.param_letters | set("RLP")
+    word_key = Word("G", 81)
+    modal_param_letters = GCodeCannedCycle.param_letters | set("RP")
 
 
 class GCodeDrillingCycleDwell(GCodeCannedCycle):
     """G82: Drilling Cycle, Dwell"""
-    param_letters = GCodeCannedCycle.param_letters | set('RLP')
-    word_key = Word('G', 82)
-    modal_param_letters = GCodeCannedCycle.param_letters | set('RP')
+
+    param_letters = GCodeCannedCycle.param_letters | set("RLP")
+    word_key = Word("G", 82)
+    modal_param_letters = GCodeCannedCycle.param_letters | set("RP")
 
 
 class GCodeDrillingCyclePeck(GCodeCannedCycle):
     """G83: Drilling Cycle, Peck"""
-    param_letters = GCodeCannedCycle.param_letters | set('RLQ')
-    word_key = Word('G', 83)
-    modal_param_letters = GCodeCannedCycle.param_letters | set('RQ')
+
+    param_letters = GCodeCannedCycle.param_letters | set("RLQ")
+    word_key = Word("G", 83)
+    modal_param_letters = GCodeCannedCycle.param_letters | set("RQ")
 
 
 class GCodeDrillingCycleChipBreaking(GCodeCannedCycle):
     """G73: Drilling Cycle, ChipBreaking"""
-    param_letters = GCodeCannedCycle.param_letters | set('RLQ')
-    word_key = Word('G', 73)
-    modal_param_letters = GCodeCannedCycle.param_letters | set('RQ')
+
+    param_letters = GCodeCannedCycle.param_letters | set("RLQ")
+    word_key = Word("G", 73)
+    modal_param_letters = GCodeCannedCycle.param_letters | set("RQ")
 
 
 class GCodeBoringCycleFeedOut(GCodeCannedCycle):
     """G85: Boring Cycle, Feed Out"""
-    param_letters = GCodeCannedCycle.param_letters | set('RLP')
-    word_key = Word('G', 85)
-    modal_param_letters = GCodeCannedCycle.param_letters | set('RP')
+
+    param_letters = GCodeCannedCycle.param_letters | set("RLP")
+    word_key = Word("G", 85)
+    modal_param_letters = GCodeCannedCycle.param_letters | set("RP")
 
 
 class GCodeBoringCycleDwellFeedOut(GCodeCannedCycle):
     """G89: Boring Cycle, Dwell, Feed Out"""
-    param_letters = GCodeCannedCycle.param_letters | set('RLP')
-    word_key = Word('G', 89)
-    modal_param_letters = GCodeCannedCycle.param_letters | set('RP')
+
+    param_letters = GCodeCannedCycle.param_letters | set("RLP")
+    word_key = Word("G", 89)
+    modal_param_letters = GCodeCannedCycle.param_letters | set("RP")
 
 
 class GCodeThreadingCycle(GCodeCannedCycle):
     """G76: Threading Cycle"""
-    param_letters = GCodeCannedCycle.param_letters | set('PZIJRKQHLE')
-    word_key = Word('G', 76)
+
+    param_letters = GCodeCannedCycle.param_letters | set("PZIJRKQHLE")
+    word_key = Word("G", 76)
 
 
 # ======================= Distance Mode =======================
@@ -616,68 +659,79 @@ class GCodeThreadingCycle(GCodeCannedCycle):
 # G7                                    Lathe Diameter Mode
 # G8                                    Lathe Radius Mode
 
+
 class GCodeDistanceMode(GCode):
     exec_order = 210
 
 
 class GCodeAbsoluteDistanceMode(GCodeDistanceMode):
     """G90: Absolute Distance Mode"""
-    word_key = Word('G', 90)
-    modal_group = MODAL_GROUP_MAP['distance']
+
+    word_key = Word("G", 90)
+    modal_group = MODAL_GROUP_MAP["distance"]
 
 
 class GCodeIncrementalDistanceMode(GCodeDistanceMode):
     """G91: Incremental Distance Mode"""
-    word_key = Word('G', 91)
-    modal_group = MODAL_GROUP_MAP['distance']
+
+    word_key = Word("G", 91)
+    modal_group = MODAL_GROUP_MAP["distance"]
 
 
 class GCodeAbsoluteArcDistanceMode(GCodeDistanceMode):
     """G90.1: Absolute Distance Mode for Arc IJK Parameters"""
-    word_key = Word('G', 90.1)
-    modal_group = MODAL_GROUP_MAP['arc_ijk_distance']
+
+    word_key = Word("G", 90.1)
+    modal_group = MODAL_GROUP_MAP["arc_ijk_distance"]
 
 
 class GCodeIncrementalArcDistanceMode(GCodeDistanceMode):
     """G91.1: Incremental Distance Mode for Arc IJK Parameters"""
-    word_key = Word('G', 91.1)
-    modal_group = MODAL_GROUP_MAP['arc_ijk_distance']
+
+    word_key = Word("G", 91.1)
+    modal_group = MODAL_GROUP_MAP["arc_ijk_distance"]
 
 
 class GCodeLatheDiameterMode(GCodeDistanceMode):
     """G7: Lathe Diameter Mode"""
-    word_key = Word('G', 7)
-    modal_group = MODAL_GROUP_MAP['lathe_diameter']
+
+    word_key = Word("G", 7)
+    modal_group = MODAL_GROUP_MAP["lathe_diameter"]
 
 
 class GCodeLatheRadiusMode(GCodeDistanceMode):
     """G8: Lathe Radius Mode"""
-    word_key = Word('G', 8)
-    modal_group = MODAL_GROUP_MAP['lathe_diameter']
+
+    word_key = Word("G", 8)
+    modal_group = MODAL_GROUP_MAP["lathe_diameter"]
 
 
 # ======================= Feed Rate Mode =======================
 # CODE              PARAMETERS          DESCRIPTION
 # G93, G94, G95                         Feed Rate Mode
 
+
 class GCodeFeedRateMode(GCode):
-    modal_group = MODAL_GROUP_MAP['feed_rate_mode']
+    modal_group = MODAL_GROUP_MAP["feed_rate_mode"]
     exec_order = 30
 
 
 class GCodeInverseTimeMode(GCodeFeedRateMode):
     """G93: Inverse Time Mode"""
-    word_key = Word('G', 93)
+
+    word_key = Word("G", 93)
 
 
 class GCodeUnitsPerMinuteMode(GCodeFeedRateMode):
     """G94: Units Per MinuteMode"""
-    word_key = Word('G', 94)
+
+    word_key = Word("G", 94)
 
 
 class GCodeUnitsPerRevolution(GCodeFeedRateMode):
     """G95: Units Per Revolution"""
-    word_key = Word('G', 95)
+
+    word_key = Word("G", 95)
 
 
 # ======================= Spindle Control =======================
@@ -686,80 +740,92 @@ class GCodeUnitsPerRevolution(GCodeFeedRateMode):
 # M19                                   Orient Spindle
 # G96, G97          S D                 Spindle Control Mode
 
+
 class GCodeSpindle(GCode):
-    word_letter = 'M'
+    word_letter = "M"
     exec_order = 90
 
 
 class GCodeStartSpindle(GCodeSpindle):
     """M3,M4: Start Spindle Clockwise"""
-    modal_group = MODAL_GROUP_MAP['spindle']
+
+    modal_group = MODAL_GROUP_MAP["spindle"]
 
 
 class GCodeStartSpindleCW(GCodeStartSpindle):
     """M3: Start Spindle Clockwise"""
-    #param_letters = set('S')  # S is it's own gcode, makes no sense to be here
-    word_key = Word('M', 3)
+
+    # param_letters = set('S')  # S is it's own gcode, makes no sense to be here
+    word_key = Word("M", 3)
+
 
 class GCodeStartSpindleCCW(GCodeStartSpindle):
     """M4: Start Spindle Counter-Clockwise"""
-    #param_letters = set('S')  # S is it's own gcode, makes no sense to be here
-    word_key = Word('M', 4)
+
+    # param_letters = set('S')  # S is it's own gcode, makes no sense to be here
+    word_key = Word("M", 4)
 
 
 class GCodeStopSpindle(GCodeSpindle):
     """M5: Stop Spindle"""
-    #param_letters = set('S')  # S is it's own gcode, makes no sense to be here
-    word_key = Word('M', 5)
-    modal_group = MODAL_GROUP_MAP['spindle']
+
+    # param_letters = set('S')  # S is it's own gcode, makes no sense to be here
+    word_key = Word("M", 5)
+    modal_group = MODAL_GROUP_MAP["spindle"]
 
 
 class GCodeOrientSpindle(GCodeSpindle):
     """M19: Orient Spindle"""
-    word_key = Word('M', 19)
+
+    word_key = Word("M", 19)
 
 
 class GCodeSpindleSpeedMode(GCodeSpindle):
-    word_letter = 'G'
-    modal_group = MODAL_GROUP_MAP['spindle_speed_mode']
+    word_letter = "G"
+    modal_group = MODAL_GROUP_MAP["spindle_speed_mode"]
 
 
 class GCodeSpindleConstantSurfaceSpeedMode(GCodeSpindleSpeedMode):
     """G96: Spindle Constant Surface Speed"""
-    param_letters = set('DS')
-    word_key = Word('G', 96)
+
+    param_letters = set("DS")
+    word_key = Word("G", 96)
 
 
 class GCodeSpindleRPMMode(GCodeSpindleSpeedMode):
     """G97: Spindle RPM Speed"""
-    param_letters = set('D')
-    word_key = Word('G', 97)
 
+    param_letters = set("D")
+    word_key = Word("G", 97)
 
 
 # ======================= Coolant =======================
 # CODE              PARAMETERS          DESCRIPTION
 # M7, M8, M9                            Coolant Control
 
+
 class GCodeCoolant(GCode):
-    word_letter = 'M'
-    modal_group = MODAL_GROUP_MAP['coolant']
+    word_letter = "M"
+    modal_group = MODAL_GROUP_MAP["coolant"]
     exec_order = 110
 
 
 class GCodeCoolantMistOn(GCodeCoolant):
     """M7: turn mist coolant on"""
-    word_key = Word('M', 7)
+
+    word_key = Word("M", 7)
 
 
 class GCodeCoolantFloodOn(GCodeCoolant):
     """M8: turn flood coolant on"""
-    word_key = Word('M', 8)
+
+    word_key = Word("M", 8)
 
 
 class GCodeCoolantOff(GCodeCoolant):
     """M9: turn all coolant off"""
-    word_key = Word('M', 9)
+
+    word_key = Word("M", 9)
 
 
 # ======================= Tool Length =======================
@@ -769,31 +835,36 @@ class GCodeCoolantOff(GCodeCoolant):
 # G43.2             H                   Apply additional Tool Length Offset
 # G49                                   Cancel Tool Length Compensation
 
+
 class GCodeToolLength(GCode):
-    modal_group = MODAL_GROUP_MAP['tool_length_offset']
+    modal_group = MODAL_GROUP_MAP["tool_length_offset"]
     exec_order = 180
 
 
 class GCodeToolLengthOffset(GCodeToolLength):
     """G43: Tool Length Offset"""
-    param_letters = set('H')
-    word_key = Word('G', 43)
+
+    param_letters = set("H")
+    word_key = Word("G", 43)
 
 
 class GCodeDynamicToolLengthOffset(GCodeToolLength):
     """G43.1: Dynamic Tool Length Offset"""
-    word_key = Word('G', 43.1)
+
+    word_key = Word("G", 43.1)
 
 
 class GCodeAddToolLengthOffset(GCodeToolLength):
     """G43.2: Appkly Additional Tool Length Offset"""
-    param_letters = set('H')
-    word_key = Word('G', 43.2)
+
+    param_letters = set("H")
+    word_key = Word("G", 43.2)
 
 
 class GCodeCancelToolLengthOffset(GCodeToolLength):
     """G49: Cancel Tool Length Compensation"""
-    word_key = Word('G', 49)
+
+    word_key = Word("G", 49)
 
 
 # ======================= Stopping (Program Control) =======================
@@ -802,54 +873,64 @@ class GCodeCancelToolLengthOffset(GCodeToolLength):
 # M2, M30                               Program End
 # M60                                   Pallet Change Pause
 
+
 class GCodeProgramControl(GCode):
-    word_letter = 'M'
-    modal_group = MODAL_GROUP_MAP['stopping']
+    word_letter = "M"
+    modal_group = MODAL_GROUP_MAP["stopping"]
     exec_order = 250
+
 
 class GCodePauseProgram(GCodeProgramControl):
     """M0: Program Pause"""
-    word_key = Word('M', 0)
+
+    word_key = Word("M", 0)
 
 
 class GCodePauseProgramOptional(GCodeProgramControl):
     """M1: Program Pause (optional)"""
-    word_key = Word('M', 1)
+
+    word_key = Word("M", 1)
 
 
 class GCodeEndProgram(GCodeProgramControl):
     """M2: Program End"""
-    word_key = Word('M', 2)
+
+    word_key = Word("M", 2)
 
 
 class GCodeEndProgramPalletShuttle(GCodeProgramControl):
     """M30: exchange pallet shuttles and end the program"""
-    word_key = Word('M', 30)
+
+    word_key = Word("M", 30)
 
 
 class GCodePalletChangePause(GCodeProgramControl):
     """M60: Pallet Change Pause"""
-    word_key = Word('M', 60)
+
+    word_key = Word("M", 60)
 
 
 # ======================= Units =======================
 # CODE              PARAMETERS          DESCRIPTION
 # G20, G21                              Units
 
+
 class GCodeUnit(GCode):
-    modal_group = MODAL_GROUP_MAP['units']
+    modal_group = MODAL_GROUP_MAP["units"]
     exec_order = 160
 
 
 class GCodeUseInches(GCodeUnit):
     """G20: use inches for length units"""
-    word_key = Word('G', 20)
+
+    word_key = Word("G", 20)
     unit_id = 0
 
 
 class GCodeUseMillimeters(GCodeUnit):
     """G21: use millimeters for length units"""
-    word_key = Word('G', 21)
+
+    word_key = Word("G", 21)
     unit_id = 1
 
 
@@ -858,8 +939,9 @@ class GCodeUseMillimeters(GCodeUnit):
 # CODE              PARAMETERS          DESCRIPTION
 # G17 - G19.1                           Plane Select
 
+
 class GCodePlaneSelect(GCode):
-    modal_group = MODAL_GROUP_MAP['plane_selection']
+    modal_group = MODAL_GROUP_MAP["plane_selection"]
     exec_order = 150
 
     # -- Plane Orientation Quaternion
@@ -884,50 +966,60 @@ class GCodePlaneSelect(GCode):
 
 class GCodeSelectXYPlane(GCodePlaneSelect):
     """G17: select XY plane (default)"""
-    word_key = Word('G', 17)
+
+    word_key = Word("G", 17)
     quat = Quaternion()  # no effect
-    normal_axis = 'Z'
-    plane_axes = set('XY')
-    normal = Vector3(0., 0., 1.)
+    normal_axis = "Z"
+    plane_axes = set("XY")
+    normal = Vector3(0.0, 0.0, 1.0)
 
 
 class GCodeSelectZXPlane(GCodePlaneSelect):
     """G18: select ZX plane"""
-    word_key = Word('G', 18)
+
+    word_key = Word("G", 18)
     quat = quat2coord_system(
-        Vector3(1., 0., 0.), Vector3(0., 1., 0.),
-        Vector3(0., 0., 1.), Vector3(1., 0., 0.)
+        Vector3(1.0, 0.0, 0.0),
+        Vector3(0.0, 1.0, 0.0),
+        Vector3(0.0, 0.0, 1.0),
+        Vector3(1.0, 0.0, 0.0),
     )
-    normal_axis = 'Y'
-    plane_axes = set('ZX')
-    normal = Vector3(0., 1., 0.)
+    normal_axis = "Y"
+    plane_axes = set("ZX")
+    normal = Vector3(0.0, 1.0, 0.0)
 
 
 class GCodeSelectYZPlane(GCodePlaneSelect):
     """G19: select YZ plane"""
-    word_key = Word('G', 19)
+
+    word_key = Word("G", 19)
     quat = quat2coord_system(
-        Vector3(1., 0., 0.), Vector3(0., 1., 0.),
-        Vector3(0., 1., 0.), Vector3(0., 0., 1.)
+        Vector3(1.0, 0.0, 0.0),
+        Vector3(0.0, 1.0, 0.0),
+        Vector3(0.0, 1.0, 0.0),
+        Vector3(0.0, 0.0, 1.0),
     )
-    normal_axis = 'X'
-    plane_axes = set('YZ')
-    normal = Vector3(1., 0., 0.)
+    normal_axis = "X"
+    plane_axes = set("YZ")
+    normal = Vector3(1.0, 0.0, 0.0)
 
 
 class GCodeSelectUVPlane(GCodePlaneSelect):
     """G17.1: select UV plane"""
-    word_key = Word('G', 17.1)
+
+    word_key = Word("G", 17.1)
 
 
 class GCodeSelectWUPlane(GCodePlaneSelect):
     """G18.1: select WU plane"""
-    word_key = Word('G', 18.1)
+
+    word_key = Word("G", 18.1)
 
 
 class GCodeSelectVWPlane(GCodePlaneSelect):
     """G19.1: select VW plane"""
-    word_key = Word('G', 19.1)
+
+    word_key = Word("G", 19.1)
 
 
 # ======================= Cutter Radius Compensation =======================
@@ -936,38 +1028,44 @@ class GCodeSelectVWPlane(GCodePlaneSelect):
 # G41,G42           D                   Cutter Compensation
 # G41.1, G42.1      D L                 Dynamic Cutter Compensation
 
+
 class GCodeCutterRadiusComp(GCode):
-    modal_group = MODAL_GROUP_MAP['cutter_diameter_comp']
+    modal_group = MODAL_GROUP_MAP["cutter_diameter_comp"]
     exec_order = 170
 
 
 class GCodeCutterRadiusCompOff(GCodeCutterRadiusComp):
     """G40: Cutter Radius Compensation Off"""
-    word_key = Word('G', 40)
+
+    word_key = Word("G", 40)
 
 
 class GCodeCutterCompLeft(GCodeCutterRadiusComp):
     """G41: Cutter Radius Compensation (left)"""
-    param_letters = set('D')
-    word_key = Word('G', 41)
+
+    param_letters = set("D")
+    word_key = Word("G", 41)
 
 
 class GCodeCutterCompRight(GCodeCutterRadiusComp):
     """G42: Cutter Radius Compensation (right)"""
-    param_letters = set('D')
-    word_key = Word('G', 42)
+
+    param_letters = set("D")
+    word_key = Word("G", 42)
 
 
 class GCodeDynamicCutterCompLeft(GCodeCutterRadiusComp):
     """G41.1: Dynamic Cutter Radius Compensation (left)"""
-    param_letters = set('DL')
-    word_key = Word('G', 41.1)
+
+    param_letters = set("DL")
+    word_key = Word("G", 41.1)
 
 
 class GCodeDynamicCutterCompRight(GCodeCutterRadiusComp):
     """G42.1: Dynamic Cutter Radius Compensation (right)"""
-    param_letters = set('DL')
-    word_key = Word('G', 42.1)
+
+    param_letters = set("DL")
+    word_key = Word("G", 42.1)
 
 
 # ======================= Path Control Mode =======================
@@ -975,25 +1073,29 @@ class GCodeDynamicCutterCompRight(GCodeCutterRadiusComp):
 # G61 G61.1                             Exact Path Mode
 # G64               P Q                 Path Blending
 
+
 class GCodePathControlMode(GCode):
-    modal_group = MODAL_GROUP_MAP['control_mode']
+    modal_group = MODAL_GROUP_MAP["control_mode"]
     exec_order = 200
 
 
 class GCodeExactPathMode(GCodePathControlMode):
     """G61: Exact path mode"""
-    word_key = Word('G', 61)
+
+    word_key = Word("G", 61)
 
 
 class GCodeExactStopMode(GCodePathControlMode):
     """G61.1: Exact stop mode"""
-    word_key = Word('G', 61.1)
+
+    word_key = Word("G", 61.1)
 
 
 class GCodePathBlendingMode(GCodePathControlMode):
     """G64: Path Blending"""
-    param_letters = set('PQ')
-    word_key = Word('G', 64)
+
+    param_letters = set("PQ")
+    word_key = Word("G", 64)
 
 
 # ======================= Return Mode in Canned Cycles =======================
@@ -1001,21 +1103,24 @@ class GCodePathBlendingMode(GCodePathControlMode):
 # G98                                   Canned Cycle Return Level to previous
 # G99                                   Canned Cycle Return to the level set by R
 
+
 class GCodeCannedReturnMode(GCode):
-    modal_group = MODAL_GROUP_MAP['canned_cycles_return']
+    modal_group = MODAL_GROUP_MAP["canned_cycles_return"]
     exec_order = 220
 
 
 class GCodeCannedCycleReturnPrevLevel(GCodeCannedReturnMode):
     """G98: Canned Cycle Return to the level set prior to cycle start"""
+
     # "retract to the position that axis was in just before this series of one or more contiguous canned cycles was started"
-    word_key = Word('G', 98)
+    word_key = Word("G", 98)
 
 
 class GCodeCannedCycleReturnToR(GCodeCannedReturnMode):
     """G99: Canned Cycle Return to the level set by R"""
+
     # "retract to the position specified by the R word of the canned cycle"
-    word_key = Word('G', 99)
+    word_key = Word("G", 99)
 
 
 # ======================= Other Modal Codes =======================
@@ -1030,154 +1135,180 @@ class GCodeCannedCycleReturnToR(GCodeCannedReturnMode):
 # M53               P0 (off) or P1 (on) Feed Stop Control
 # G54-G59.3                             Select Coordinate System
 
+
 class GCodeOtherModal(GCode):
     pass
 
 
 class GCodeFeedRate(GCodeOtherModal):
     """F: Set Feed Rate"""
-    word_letter = 'F'
+
+    word_letter = "F"
     word_value_configurable = True
+
     @classmethod
     def word_matches(cls, w):
-        return w.letter == 'F'
-    default_word = Word('F', 0)
-    modal_group = MODAL_GROUP_MAP['feed_rate']
+        return w.letter == "F"
+
+    default_word = Word("F", 0)
+    modal_group = MODAL_GROUP_MAP["feed_rate"]
     exec_order = 40
 
 
 class GCodeSpindleSpeed(GCodeOtherModal):
     """S: Set Spindle Speed"""
-    word_letter = 'S'
+
+    word_letter = "S"
     word_value_configurable = True
+
     @classmethod
     def word_matches(cls, w):
-        return w.letter == 'S'
-    default_word = Word('S', 0)
+        return w.letter == "S"
+
+    default_word = Word("S", 0)
     # Modal Group: (see description in GCodeFeedRate)
-    modal_group = MODAL_GROUP_MAP['spindle_speed']
+    modal_group = MODAL_GROUP_MAP["spindle_speed"]
     exec_order = 50
 
 
 class GCodeSelectTool(GCodeOtherModal):
     """T: Select Tool"""
-    word_letter = 'T'
+
+    word_letter = "T"
     word_value_configurable = True
+
     @classmethod
     def word_matches(cls, w):
-        return w.letter == 'T'
-    default_word = Word('T', 0)
+        return w.letter == "T"
+
+    default_word = Word("T", 0)
     # Modal Group: (see description in GCodeFeedRate)
-    modal_group = MODAL_GROUP_MAP['tool']
+    modal_group = MODAL_GROUP_MAP["tool"]
     exec_order = 60
 
 
 class GCodeSpeedAndFeedOverrideOn(GCodeOtherModal):
     """M48: Speed and Feed Override Control On"""
-    word_letter = 'M'
-    word_key = Word('M', 48)
-    modal_group = MODAL_GROUP_MAP['override_switches']
+
+    word_letter = "M"
+    word_key = Word("M", 48)
+    modal_group = MODAL_GROUP_MAP["override_switches"]
     exec_order = 120
 
 
 class GCodeSpeedAndFeedOverrideOff(GCodeOtherModal):
     """M49: Speed and Feed Override Control Off"""
-    word_letter = 'M'
-    word_key = Word('M', 49)
-    modal_group = MODAL_GROUP_MAP['override_switches']
+
+    word_letter = "M"
+    word_key = Word("M", 49)
+    modal_group = MODAL_GROUP_MAP["override_switches"]
     exec_order = 120
 
 
 class GCodeFeedOverride(GCodeOtherModal):
     """M50: Feed Override Control"""
-    word_letter = 'M'
-    param_letters = set('P')
-    word_key = Word('M', 50)
+
+    word_letter = "M"
+    param_letters = set("P")
+    word_key = Word("M", 50)
     exec_order = 120
 
 
 class GCodeSpindleSpeedOverride(GCodeOtherModal):
     """M51: Spindle Speed Override Control"""
-    word_letter = 'M'
-    param_letters = set('P')
-    word_key = Word('M', 51)
+
+    word_letter = "M"
+    param_letters = set("P")
+    word_key = Word("M", 51)
     exec_order = 120
 
 
 class GCodeAdaptiveFeed(GCodeOtherModal):
     """M52: Adaptive Feed Control"""
-    word_letter = 'M'
-    param_letters = set('P')
-    word_key = Word('M', 52)
+
+    word_letter = "M"
+    param_letters = set("P")
+    word_key = Word("M", 52)
     exec_order = 120
 
 
 class GCodeFeedStop(GCodeOtherModal):
     """M53: Feed Stop Control"""
-    word_letter = 'M'
-    param_letters = set('P')
-    word_key = Word('M', 53)
+
+    word_letter = "M"
+    param_letters = set("P")
+    word_key = Word("M", 53)
     exec_order = 120
 
 
 class GCodeSelectCoordinateSystem(GCodeOtherModal):
     """Select Coordinate System"""
-    modal_group = MODAL_GROUP_MAP['coordinate_system']
+
+    modal_group = MODAL_GROUP_MAP["coordinate_system"]
     exec_order = 190
     coord_system_id = None  # overridden in inheriting classes
 
 
 class GCodeSelectCoordinateSystem1(GCodeSelectCoordinateSystem):
     """Select Coordinate System 1"""
-    word_key = Word('G', 54)
+
+    word_key = Word("G", 54)
     coord_system_id = 1
 
 
 class GCodeSelectCoordinateSystem2(GCodeSelectCoordinateSystem):
     """Select Coordinate System 2"""
-    word_key = Word('G', 55)
+
+    word_key = Word("G", 55)
     coord_system_id = 2
 
 
 class GCodeSelectCoordinateSystem3(GCodeSelectCoordinateSystem):
     """Select Coordinate System 3"""
-    word_key = Word('G', 56)
+
+    word_key = Word("G", 56)
     coord_system_id = 3
 
 
 class GCodeSelectCoordinateSystem4(GCodeSelectCoordinateSystem):
     """Select Coordinate System 4"""
-    word_key = Word('G', 57)
+
+    word_key = Word("G", 57)
     coord_system_id = 4
 
 
 class GCodeSelectCoordinateSystem5(GCodeSelectCoordinateSystem):
     """Select Coordinate System 5"""
-    word_key = Word('G', 58)
+
+    word_key = Word("G", 58)
     coord_system_id = 5
 
 
 class GCodeSelectCoordinateSystem6(GCodeSelectCoordinateSystem):
     """Select Coordinate System 6"""
-    word_key = Word('G', 59)
+
+    word_key = Word("G", 59)
     coord_system_id = 6
 
 
 class GCodeSelectCoordinateSystem7(GCodeSelectCoordinateSystem):
     """Select Coordinate System 7"""
+
     coord_system_id = 7
-    word_key = Word('G', 59.1)
+    word_key = Word("G", 59.1)
 
 
 class GCodeSelectCoordinateSystem8(GCodeSelectCoordinateSystem):
     """Select Coordinate System 8"""
-    word_key = Word('G', 59.2)
+
+    word_key = Word("G", 59.2)
     coord_system_id = 8
 
 
 class GCodeSelectCoordinateSystem9(GCodeSelectCoordinateSystem):
     """Select Coordinate System 9"""
-    word_key = Word('G', 59.3)
+
+    word_key = Word("G", 59.3)
     coord_system_id = 9
 
 
@@ -1202,55 +1333,65 @@ class GCodeSelectCoordinateSystem9(GCodeSelectCoordinateSystem):
 # M67               T                   Analog Output, Synchronized
 # M68               T                   Analog Output, Immediate
 
+
 class GCodeIO(GCode):
-    word_letter = 'M'
+    word_letter = "M"
     exec_order = 70
 
 
 class GCodeDigitalOutput(GCodeIO):
     """Digital Output Control"""
-    param_letters = set('P')
+
+    param_letters = set("P")
 
 
 class GCodeDigitalOutputOnSyncd(GCodeDigitalOutput):
     """M62: turn on digital output synchronized with motion"""
-    word_key = Word('M', 62)
+
+    word_key = Word("M", 62)
 
 
 class GCodeDigitalOutputOffSyncd(GCodeDigitalOutput):
     """M63: turn off digital output synchronized with motion"""
-    word_key = Word('M', 63)
+
+    word_key = Word("M", 63)
 
 
 class GCodeDigitalOutputOn(GCodeDigitalOutput):
     """M64: turn on digital output immediately"""
-    word_key = Word('M', 64)
+
+    word_key = Word("M", 64)
 
 
 class GCodeDigitalOutputOff(GCodeDigitalOutput):
     """M65: turn off digital output immediately"""
-    word_key = Word('M', 65)
+
+    word_key = Word("M", 65)
 
 
 class GCodeWaitOnInput(GCodeIO):
     """M66: Wait on Input"""
-    param_letters = set('PELQ')
-    word_key = Word('M', 66)
+
+    param_letters = set("PELQ")
+    word_key = Word("M", 66)
 
 
 class GCodeAnalogOutput(GCodeIO):
     """Analog Output"""
-    param_letters = set('T')
+
+    param_letters = set("T")
 
 
 class GCodeAnalogOutputSyncd(GCodeAnalogOutput):
     """M67: Analog Output, Synchronized"""
-    word_key = Word('M', 67)
+
+    word_key = Word("M", 67)
 
 
 class GCodeAnalogOutputImmediate(GCodeAnalogOutput):
     """M68: Analog Output, Immediate"""
-    word_key = Word('M', 68)
+
+    word_key = Word("M", 68)
 
 
 # ======================= Non-modal Codes =======================
@@ -1270,69 +1411,81 @@ class GCodeAnalogOutputImmediate(GCodeAnalogOutput):
 # G92.3                                 Restore G92 Offsets
 # M101 - M199       P Q                 User Defined Commands
 
+
 class GCodeNonModal(GCode):
     pass
 
 
 class GCodeToolChange(GCodeNonModal):
     """M6: Tool Change"""
-    param_letters = set('T')
-    word_key = Word('M', 6)
-    word_letter = 'M'
+
+    param_letters = set("T")
+    word_key = Word("M", 6)
+    word_letter = "M"
     exec_order = 80
 
 
 class GCodeToolSetCurrent(GCodeNonModal):
     """M61: Set Current Tool"""
-    param_letters = set('Q')
-    word_key = Word('M', 61)
-    word_letter = 'M'
+
+    param_letters = set("Q")
+    word_key = Word("M", 61)
+    word_letter = "M"
     exec_order = 80
 
 
 class GCodeSet(GCodeNonModal):
     """G10: Set stuff"""
-    param_letters = set('LPQRABCXYZ')
-    word_key = Word('G', 10)
+
+    param_letters = set("LPQRABCXYZ")
+    word_key = Word("G", 10)
     exec_order = 230
 
 
 class GCodeGotoPredefinedPosition(GCodeNonModal):
     """G28,G30: Goto Predefined Position (rapid movement)"""
+
     @classmethod
     def word_matches(cls, w):
-        return (w.letter == 'G') and (w.value in [28, 30])
-    default_word = Word('G', 28)
+        return (w.letter == "G") and (w.value in [28, 30])
+
+    default_word = Word("G", 28)
     exec_order = 230
 
 
 class GCodeSetPredefinedPosition(GCodeNonModal):
     """G28.1,G30.1: Set Predefined Position"""  # redundancy in language there, but I'll let it slide
+
     @classmethod
     def word_matches(cls, w):
-        return (w.letter == 'G') and (w.value in [28.1, 30.1])
-    default_word = Word('G', 28.1)
+        return (w.letter == "G") and (w.value in [28.1, 30.1])
+
+    default_word = Word("G", 28.1)
     exec_order = 230
 
 
 class GCodeMoveInMachineCoords(GCodeNonModal):
     """G53: Move in Machine Coordinates"""
-    word_key = Word('G', 53)
+
+    word_key = Word("G", 53)
     exec_order = 240
 
 
 class GCodeCoordSystemOffset(GCodeNonModal):
     """G92: Coordinate System Offset"""
-    word_key = Word('G', 92)
+
+    word_key = Word("G", 92)
     exec_order = 230
 
 
 class GCodeResetCoordSystemOffset(GCodeNonModal):
     """G92.1,G92.2: Reset Coordinate System Offset"""
+
     @classmethod
     def word_matches(cls, w):
-        return (w.letter == 'G') and (w.value in [92.1, 92.2])
-    default_word = Word('G', 92.1)
+        return (w.letter == "G") and (w.value in [92.1, 92.2])
+
+    default_word = Word("G", 92.1)
     exec_order = 230
 
     # TODO: machine.state.offset *= 0
@@ -1340,24 +1493,27 @@ class GCodeResetCoordSystemOffset(GCodeNonModal):
 
 class GCodeRestoreCoordSystemOffset(GCodeNonModal):
     """G92.3: Restore Coordinate System Offset"""
-    word_key = Word('G', 92.3)
+
+    word_key = Word("G", 92.3)
     exec_order = 230
 
 
 class GCodeUserDefined(GCodeNonModal):
     """M101-M199: User Defined Commands"""
-    word_letter = 'M'
+
+    word_letter = "M"
     # To create user g-codes, inherit from this class
-    param_letters = set('PQ')
-    #@classmethod
-    #def word_matches(cls, w):
+    param_letters = set("PQ")
+    # @classmethod
+    # def word_matches(cls, w):
     #    return (w.letter == 'M') and (101 <= w.value <= 199)
-    #default_word = Word('M', 101)
+    # default_word = Word('M', 101)
     exec_order = 130
-    modal_group = MODAL_GROUP_MAP['user_defined']
+    modal_group = MODAL_GROUP_MAP["user_defined"]
 
 
 # ======================= Utilities =======================
+
 
 def _subclasses_level(root_class, recursion_level=0):
     """
@@ -1368,25 +1524,25 @@ def _subclasses_level(root_class, recursion_level=0):
     """
     yield (root_class, recursion_level)
     for cls in sorted(root_class.__subclasses__(), key=lambda c: c.__name__):
-        for (sub, level) in _subclasses_level(cls, recursion_level+1):
+        for sub, level in _subclasses_level(cls, recursion_level + 1):
             yield (sub, level)
 
 
 def _subclasses(root_class):
     """Flat list of all classes inheriting from the given root class (recursive)"""
-    for (cls, level) in _subclasses_level(root_class):
+    for cls, level in _subclasses_level(root_class):
         yield cls
 
 
-def _gcode_class_infostr(base_class=GCode, prefix=''):
+def _gcode_class_infostr(base_class=GCode, prefix=""):
     """
     List all ineheriting classes for the given gcode class
     :param base_class: root of hierarcy
     :return: str listing all gcode classes
     """
     info_str = ""
-    for (cls, level) in _subclasses_level(base_class):
-        word_str = ''
+    for cls, level in _subclasses_level(base_class):
+        word_str = ""
         if cls.word_key:
             word_str = str(cls.word_key)
         info_str += "{prefix}{word} {indent}- {name}: {description}\n".format(
@@ -1401,8 +1557,10 @@ def _gcode_class_infostr(base_class=GCode, prefix=''):
 
 # ======================= GCode Word Mapping =======================
 _gcode_maps_created = False  # only set when the below values are populated
-_gcode_word_map = {} # of the form: {Word('G', 0): GCodeRapidMove, ... }
-_gcode_function_list = [] # of the form: [(lambda w: w.letter == 'F', GCodeFeedRate), ... ]
+_gcode_word_map = {}  # of the form: {Word('G', 0): GCodeRapidMove, ... }
+_gcode_function_list = (
+    []
+)  # of the form: [(lambda w: w.letter == 'F', GCodeFeedRate), ... ]
 
 
 def build_maps():
@@ -1417,7 +1575,9 @@ def build_maps():
         if cls.word_key is not None:
             # Map Word instance to g-code class
             if cls.word_key in _gcode_word_map:
-                raise RuntimeError("Multiple GCode classes map to '%s'" % str(cls.word_key))
+                raise RuntimeError(
+                    "Multiple GCode classes map to '%s'" % str(cls.word_key)
+                )
             _gcode_word_map[cls.word_key] = cls
         elif cls.word_matches is not None:
             # Add to list of functions
@@ -1441,7 +1601,7 @@ def word_gcode_class(word, exhaustive=False):
 
     # quickly eliminate parameters
     # TODO: get valid world letters from dialect
-    if (not exhaustive) and (word.letter not in 'GMFSTNO'):
+    if (not exhaustive) and (word.letter not in "GMFSTNO"):
         return None
 
     # by Word Map (faster)
@@ -1449,7 +1609,7 @@ def word_gcode_class(word, exhaustive=False):
         return _gcode_word_map[word]
 
     # by Function List (slower, so checked last)
-    for (match_function, gcode_class) in _gcode_function_list:
+    for match_function, gcode_class in _gcode_function_list:
         if match_function(word):
             return gcode_class
 
@@ -1485,10 +1645,10 @@ def words2gcodes(words):
     # First determine which words are GCode candidates
     word_info_list = [
         {
-            'index': i, # for internal referencing
-            'word': word,
-            'gcode_class': word_gcode_class(word), # if not None, word is a candidate
-            'param_to_index': None,
+            "index": i,  # for internal referencing
+            "word": word,
+            "gcode_class": word_gcode_class(word),  # if not None, word is a candidate
+            "param_to_index": None,
         }
         for (i, word) in enumerate(words)
     ]
@@ -1497,28 +1657,27 @@ def words2gcodes(words):
     # note: gcode candidates may be valid parameters... therefore
     # Also eliminate candidates that are parameters for earlier gcode candidates
     for word_info in word_info_list:
-        if word_info['gcode_class'] is None:
-            continue # not a gcode candidate, so cannot have parameters
+        if word_info["gcode_class"] is None:
+            continue  # not a gcode candidate, so cannot have parameters
         # which of the words following this gcode candidate are a valid parameter
-        for param_info in word_info_list[word_info['index'] + 1:]:
-            if param_info['word'].letter in word_info['gcode_class'].param_letters:
-                param_info['param_to_index'] = word_info['index']
-                param_info['gcode_class'] = None # no longer a valid candidate
+        for param_info in word_info_list[word_info["index"] + 1 :]:
+            if param_info["word"].letter in word_info["gcode_class"].param_letters:
+                param_info["param_to_index"] = word_info["index"]
+                param_info["gcode_class"] = None  # no longer a valid candidate
 
     # Map parameters
-    parameter_map = defaultdict(list) # {<gcode word index>: [<parameter words>], ... }
+    parameter_map = defaultdict(list)  # {<gcode word index>: [<parameter words>], ... }
     for word_info in word_info_list:
-        if word_info['gcode_class']:
-            continue # will form a gcode, so must not also be a parameter
-        parameter_map[word_info['param_to_index']].append(word_info['word'])
+        if word_info["gcode_class"]:
+            continue  # will form a gcode, so must not also be a parameter
+        parameter_map[word_info["param_to_index"]].append(word_info["word"])
 
     # Create gcode instances
     for word_info in word_info_list:
-        if word_info['gcode_class'] is None:
-            continue # not a gcode candidate
-        gcode = word_info['gcode_class'](
-            word_info['word'],
-            *parameter_map[word_info['index']] # gcode parameters
+        if word_info["gcode_class"] is None:
+            continue  # not a gcode candidate
+        gcode = word_info["gcode_class"](
+            word_info["word"], *parameter_map[word_info["index"]]  # gcode parameters
         )
         gcodes.append(gcode)
 
@@ -1534,11 +1693,14 @@ def text2gcodes(text):
     words = list(text2words(text))
     (gcodes, modal_words) = words2gcodes(words)
     if modal_words:
-        raise GCodeWordStrError("gcode text not fully formed, unassigned parameters: %r" % modal_words)
+        raise GCodeWordStrError(
+            "gcode text not fully formed, unassigned parameters: %r" % modal_words
+        )
     return gcodes
 
 
 # ======================= Utilities =======================
+
 
 def split_gcodes(gcode_list, splitter_class, sort_list=True):
     """
@@ -1589,14 +1751,14 @@ def split_gcodes(gcode_list, splitter_class, sort_list=True):
     #     split_gcodes(g_list, type(g2)) == [[g1], [g2], [g3, g4]]
     # 3 lists are always returned, even if empty; if 2nd list is empty,
     # then the 3rd will be as well.
-    if sort_list: # sort by execution order first
+    if sort_list:  # sort by execution order first
         gcode_list = sorted(gcode_list)
 
     split = [gcode_list, [], []]  # default (if no splitter can be found)
 
     # Find splitter index (only one can be found)
     split_index = None
-    for (i, gcode) in enumerate(gcode_list):
+    for i, gcode in enumerate(gcode_list):
         if isinstance(gcode, splitter_class):
             split_index = i
             break
@@ -1605,12 +1767,12 @@ def split_gcodes(gcode_list, splitter_class, sort_list=True):
     if split_index is not None:
         split[0] = gcode_list[:split_index]
         split[1] = [gcode_list[split_index]]
-        split[2] = gcode_list[split_index+1:]
+        split[2] = gcode_list[split_index + 1 :]
 
     return split
 
 
-def _gcodes_abs2rel(start_pos, dist_mode=None, axes='XYZ'):
+def _gcodes_abs2rel(start_pos, dist_mode=None, axes="XYZ"):
     """
     Decorator to convert returned motion gcode coordinates to incremental.
     Intended to be used internally (mainly because it's a little shonky).
@@ -1635,7 +1797,8 @@ def _gcodes_abs2rel(start_pos, dist_mode=None, axes='XYZ'):
     #   gocde_list[1] # == GCodeLinearMove(Z=-8)
 
     SUPPORTED_MOTIONS = (
-        GCodeRapidMove, GCodeLinearMove,
+        GCodeRapidMove,
+        GCodeLinearMove,
     )
 
     def wrapper(func):
@@ -1643,10 +1806,15 @@ def _gcodes_abs2rel(start_pos, dist_mode=None, axes='XYZ'):
         def inner(*largs, **kwargs):
             # Create Machine (with minimal information)
             from .machine import Machine, Mode, Position
-            m = type('AbsoluteCoordMachine', (Machine,), {
-                'MODE_CLASS': type('NullMode', (Mode,), {'default_mode': 'G90'}),
-                'axes': axes,
-            })()
+
+            m = type(
+                "AbsoluteCoordMachine",
+                (Machine,),
+                {
+                    "MODE_CLASS": type("NullMode", (Mode,), {"default_mode": "G90"}),
+                    "axes": axes,
+                },
+            )()
             m.pos = start_pos
 
             for gcode in func(*largs, **kwargs):
@@ -1659,11 +1827,14 @@ def _gcodes_abs2rel(start_pos, dist_mode=None, axes='XYZ'):
                     m.process_gcodes(gcode)
                     pos_to = m.pos
 
-                    if gcode.modal_group != MODAL_GROUP_MAP['motion']:
+                    if gcode.modal_group != MODAL_GROUP_MAP["motion"]:
                         yield gcode  # only deal with motion gcodes
                         continue
                     elif not isinstance(gcode, SUPPORTED_MOTIONS):
-                        raise NotImplementedError("%r to iterative coords is not supported (this is only a very simple function)" % gcode)
+                        raise NotImplementedError(
+                            "%r to iterative coords is not supported (this is only a very simple function)"
+                            % gcode
+                        )
 
                     # Convert coordinates to iterative
                     rel_pos = pos_to - pos_from
@@ -1671,10 +1842,10 @@ def _gcodes_abs2rel(start_pos, dist_mode=None, axes='XYZ'):
                     if coord_words:  # else relative coords are all zero; do nothing
                         yield words2gcodes([gcode.word] + coord_words)[0].pop()
 
-
         # Return apropriate function
         if (dist_mode is None) or isinstance(dist_mode, GCodeIncrementalDistanceMode):
             return inner
         else:
             return func  # bypass decorator entirely; nothing to be done
+
     return wrapper
