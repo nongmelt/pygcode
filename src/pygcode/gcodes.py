@@ -1440,6 +1440,14 @@ class GCodeSet(GCodeNonModal):
     exec_order = 230
 
 
+class GCodeGotoHomePosition(GCodeNonModal):
+    """G28: Goto Home Position (rapid movement)"""
+
+    param_letters = set("XYZE")
+    default_word = Word("G", 28)
+    exec_order = 230
+
+
 class GCodeGotoPredefinedPosition(GCodeNonModal):
     """G28,G30: Goto Predefined Position (rapid movement)"""
 
