@@ -1,5 +1,5 @@
 import sys
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from copy import copy
 import six
 
@@ -170,7 +170,7 @@ class GCode(object):
             gcode_word = self._default_word()
         assert isinstance(gcode_word, Word), "invalid gcode word %r" % gcode_word
         self.word = gcode_word
-        self.params = {}
+        self.params = OrderedDict()
 
         # Whitespace as prefix
         #   if True, str(self) will repalce self.word code with whitespace
@@ -186,9 +186,7 @@ class GCode(object):
         param_str = ""
         if self.params:
             param_str = "{%s}" % (
-                ", ".join(
-                    ["{}".format(self.params[k]) for k in sorted(self.params.keys())]
-                )
+                ", ".join(["{}".format(self.params[k]) for k in self.params.keys()])
             )
         return "<{class_name}: {gcode}{params}>".format(
             class_name=self.__class__.__name__,
@@ -201,7 +199,7 @@ class GCode(object):
         param_str = ""
         if self.params:
             param_str += " " + " ".join(
-                ["{}".format(self.params[k]) for k in sorted(self.params.keys())]
+                ["{}".format(self.params[k]) for k in self.params.keys()]
             )
         word_str = str(self.word)
         if self._whitespace_prefix:
@@ -390,7 +388,7 @@ class GCodeProgramName(GCodeDefinition):
 
 
 # ======================= Motion =======================
-#   (X Y Z A B C U V W apply to all motions)
+#   (X Y Z E A B C U V W apply to all motions)
 # CODE          PARAMETERS      DESCRIPTION
 # G0                            Rapid Move
 # G1                            Linear Move
@@ -406,7 +404,7 @@ class GCodeProgramName(GCodeDefinition):
 
 
 class GCodeMotion(GCode):
-    param_letters = set("XYZEFABCUVW")
+    param_letters = set("XYZEABCUVW")
     modal_group = MODAL_GROUP_MAP["motion"]
     exec_order = 242
 
